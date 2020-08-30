@@ -277,11 +277,14 @@ class Game {
         const addingAt = {}; // Time => currentTime より先の Adding
         const buyingAt = {}; // Time => currentTime より先の Buying
 
+        const start0 = new Date();
         for (let itemId in mItems) {
             itemPower[itemId] = bigint('0');
             itemBuilding[itemId] = [];
         }
+        logger(`calcStatus0`, start0);
 
+        const start1 = new Date();
         for (let a of addings) {
             // adding は adding.time に isu を増加させる
             if (a.time <= currentTime) {
@@ -292,7 +295,8 @@ class Game {
                 addingAt[a.time] = a;
             }
         }
-
+        logger(`calcStatus1`, start1);
+        const start2 = new Date();
         for (let b of buyings) {
             // buying は 即座に isu を消費し buying.time からアイテムの効果を発揮する
             itemBought[b.item_id] = itemBought[b.item_id]
@@ -318,7 +322,8 @@ class Game {
                 buyingAt[b.time].push(b);
             }
         }
-
+        logger(`calcStatus2`, start2);
+        const start3 = new Date();
         for (let itemId in mItems) {
             const m = mItems[itemId];
             itemPower0[m.itemId] = this.big2exp(itemPower[m.itemId]);
@@ -329,7 +334,7 @@ class Game {
                 itemOnSale[m.itemId] = 0; // 0 は 時刻 currentTime で購入可能であることを表す
             }
         }
-
+        logger(`calcStatus3`, start3);
         const schedule = [
             {
                 time: currentTime,
@@ -337,7 +342,7 @@ class Game {
                 total_power: this.big2exp(totalPower),
             },
         ];
-
+        const start4 = new Date();
         // currentTime から 1000 ミリ秒先までシミュレーションする
         for (let t = currentTime + 1; t <= currentTime + 1000; t++) {
             totalMilliIsu = totalMilliIsu.add(totalPower);
@@ -396,12 +401,12 @@ class Game {
                 }
             }
         }
-
+        logger(`calcStatus4`, start4);
         const gsAdding = [];
         for (let a of Object.values(addingAt)) {
             gsAdding.push(a);
         }
-
+        const start5 = new Date();
         const gsItems = [];
         for (let itemId in mItems) {
             gsItems.push({
@@ -422,7 +427,7 @@ class Game {
                 time: t,
             });
         }
-
+        logger(`calcStatus5`, start5);
         return {
             time: 0,
             adding: gsAdding,
