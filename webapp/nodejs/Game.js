@@ -283,19 +283,23 @@ class Game {
 
         const start1 = new Date();
         let totalMilliIsu = this.lastTotalMilliIsu || bigint('0');
+        let metCondition = true;
         for (let i = (this.lastAddingPos || -1) + 1; i < addings.length; i++) {
             const a = addings[i];
             // adding は adding.time に isu を増加させる
             if (a.time <= currentTime) {
-                this.lastAddingPos = i;
                 totalMilliIsu = totalMilliIsu.add(
                     bigint(a.isu).mul(bigint('1000'))
                 );
             } else {
+                if (metCondition) {
+                    this.lastAddingPos = i - 1;
+                    this.lastTotalMilliIsu = totalMilliIsu;
+                }
+                metCondition = false;
                 addingAt[a.time] = a;
             }
         }
-        this.lastTotalMilliIsu = totalMilliIsu;
         logger(`calcStatus1`, start1);
         const start2 = new Date();
         for (let b of buyings) {
