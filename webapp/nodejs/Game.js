@@ -361,6 +361,7 @@ class Game {
         // currentTime から 1000 ミリ秒先までシミュレーションする
         for (let i = 0; i < times.length; i++) {
             const t = times[i];
+            const prevTotalMilliIsu = totalMilliIsu;
             totalMilliIsu = totalMilliIsu.add(
                 totalPower.mul(
                     bigint(`${times[i] - (i > 0 ? times[i - 1] : currentTime)}`)
@@ -382,11 +383,29 @@ class Game {
                 if (typeof itemOnSale[itemId] !== 'undefined') {
                     continue;
                 }
-                if (
-                    0 <=
-                    totalMilliIsu.cmp(itemPrice[itemId].mul(bigint('1000')))
-                ) {
-                    itemOnSale[itemId] = t;
+                const itemPMilli = itemPrice[itemId].mul(bigint('1000'));
+                function isOk(milli) {
+                    return 0 <= milli.cmp(itemPMilli);
+                }
+                if (isOk(totalMilliIsu)) {
+                    if (addingAt[t]) {
+                        if (
+                            !isOk(
+                                totalMilliIsu.sub(
+                                    bigint(addingAt[t].isu).mul(bigint('1000'))
+                                )
+                            )
+                        ) {
+                            itemOnSale[itemId] = t;
+                        }
+                    }
+                    if (typeof itemOnSale[itemId] !== 'undefined') continue;
+                    const tt = itemPMilli
+                        .sub(prevTotalMilliIsu)
+                        .add(totalPower)
+                        .sub(bigint('1'))
+                        .div(totalPower);
+                    itemOnSale[itemId] = tt;
                 }
             }
 
