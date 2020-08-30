@@ -261,7 +261,7 @@ class Game {
     calcStatus(currentTime, mItems, addings, buyings) {
         // 1ミリ秒に生産できる椅子の単位をミリ椅子とする
         let totalMilliIsu = bigint('0');
-        let totalPower = bigint('0');
+        let totalPower = 0;
 
         const itemPower = {}; // ItemID => Power
         const itemPrice = {}; // ItemID => Price
@@ -314,7 +314,7 @@ class Game {
                 totalMilliIsu = totalMilliIsu.add(
                     power.mul(bigint(currentTime - b.time))
                 );
-                totalPower = totalPower.add(power);
+                totalPower += m.getPower2(itemBought[b.item_id]);
                 itemPower[b.item_id] = itemPower[b.item_id].add(power);
             } else {
                 buyingAt[b.time] = buyingAt[b.time] || [];
@@ -342,7 +342,7 @@ class Game {
             {
                 time: currentTime,
                 milli_isu: this.big2exp(totalMilliIsu),
-                total_power: this.big2exp(totalPower),
+                total_power: this.number2exp(totalPower),
             },
         ];
         const start4 = new Date();
@@ -366,7 +366,7 @@ class Game {
             const prevTotalMilliIsu = totalMilliIsu;
             const prevT = i > 0 ? times[i - 1] : currentTime;
             totalMilliIsu = totalMilliIsu.add(
-                totalPower.mul(bigint(`${times[i] - prevT}`))
+                totalPower * (times[i] - prevT)
             );
             let updated = false;
 
@@ -404,9 +404,9 @@ class Game {
                     const tt =
                         itemPMilli
                             .sub(prevTotalMilliIsu)
-                            .add(totalPower)
+                            .add(bigint(totalPower))
                             .sub(bigint('1'))
-                            .div(totalPower)
+                            .div(bigint(totalPower))
                             .toNumber() + prevT;
 
                     itemOnSale[itemId] = tt;
@@ -425,7 +425,7 @@ class Game {
                         : 1;
                     const power = m.getPower(b.ordinal);
                     itemPower[b.item_id] = itemPower[b.item_id].add(power);
-                    totalPower = totalPower.add(power);
+                    totalPower += m.getPower2(b.ordinal);
                 }
                 for (let id in updatedID) {
                     itemBuilding[id].push({
@@ -440,7 +440,7 @@ class Game {
                 schedule.push({
                     time: t,
                     milli_isu: this.big2exp(totalMilliIsu),
-                    total_power: this.big2exp(totalPower),
+                    total_power: this.number2exp(totalPower),
                 });
             }
         }
@@ -496,6 +496,22 @@ class Game {
         if (s.length <= 15) {
             return new Exponential({
                 mantissa: n.toNumber(),
+                exponent: 0,
+            });
+        }
+
+        const t = parseInt(s.slice(0, 15), 10);
+        return new Exponential({
+            mantissa: t,
+            exponent: s.length - 15,
+        });
+    }
+
+    number2exp(n) {
+        const s = n.toString();
+        if (s.length <= 15) {
+            return new Exponential({
+                mantissa: n,
                 exponent: 0,
             });
         }
