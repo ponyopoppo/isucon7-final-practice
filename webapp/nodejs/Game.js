@@ -1,6 +1,7 @@
 const bigint = require('bigint')
 const MItem = require('./MItem')
 const Exponential = require('./Exponential')
+const logger = require('./logger');
 
 class Game {
   constructor(roomName, pool) {
@@ -38,20 +39,30 @@ class Game {
       throw e
     }
   }
-
+  
   async addIsu (reqIsu, reqTime) {
     try {
       const connection = await this.pool.getConnection()
       await connection.beginTransaction()
 
       try {
+        const start0 = new Date();          
         await this.updateRoomTime(connection, reqTime)
         await connection.query('INSERT INTO adding(room_name, time, isu) VALUES (?, ?, \'0\') ON DUPLICATE KEY UPDATE isu=isu', [this.roomName, reqTime])
+        logger(`${action}0`, new Date() - start0);
 
+        const start1 = new Date();
         const [[{ isu }]] = await connection.query('SELECT isu FROM adding WHERE room_name = ? AND time = ? FOR UPDATE', [this.roomName, reqTime])
+        logger(`${action}1`, new Date() - start1);
+        
+        const start2 = new Date();
         const newIsu = reqIsu.add(bigint(isu))
+        logger(`${action}2`, new Date() - start2);
 
+        const start3 = new Date();
         await connection.query('UPDATE adding SET isu = ? WHERE room_name = ? AND time = ?', [newIsu.toString(), this.roomName, reqTime])
+        logger(`${action}3`, new Date() - start3);
+
         await connection.commit()
         connection.release()
         return true

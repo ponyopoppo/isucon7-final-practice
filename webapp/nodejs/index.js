@@ -7,7 +7,7 @@ const websockify = require('koa-websocket')
 const serve = require('koa-static')
 const mysql = require('mysql2/promise')
 const Game = require('./Game')
-const fs = require('fs');
+const logger = require('./logger');
 
 const app = websockify(new Koa())
 const pool = mysql.createPool({
@@ -33,25 +33,6 @@ const getRoomHandler = async (ctx, roomName) => {
     host: '',
     path: `/ws/${roomName}`
   }
-}
-const LOG_FILE_NAME = 'node.log';
-function logWebSocket(path, timeDiff) {
-    fs.appendFileSync(
-        LOG_FILE_NAME,
-        JSON.stringify({
-            time: new Date().toISOString(),
-            remote_addr: 'dummy',
-            time_local: 'dummy',
-            remote_user: '',
-            request: `WS dummy HTTP/1.1`,
-            request_uri: `/websocketlog/${path}`,
-            request_method: 'WS',
-            request_time: `${timeDiff}`,
-            request_body: '',
-            request_status: '200',
-            body_bytes_sent: '1000',
-        }) + '\n'
-    );
 }
 
 const wsGameHandler = async (ctx, roomName) => {
@@ -79,7 +60,7 @@ const wsGameHandler = async (ctx, roomName) => {
       }
 
       await send(ctx.websocket, { request_id, is_success })
-      logWebSocket(`${action}/${isu}/${request_id}/${item_id}`, new Date() - start);
+      logger(`${action}/${isu}/${request_id}/${item_id}`, new Date() - start);
     } catch (e) {
       console.error(e)
       ctx.app.emit('error', e, ctx)
