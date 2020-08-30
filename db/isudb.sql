@@ -32,3 +32,5 @@ CREATE TABLE `adding` (
   PRIMARY KEY (`room_name`,`time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
+ALTER TABLE buying ADD INDEX room_name_index(room_name)
+ALTER TABLE adding ADD INDEX room_name_index(room_name)
