@@ -107,17 +107,23 @@ class Game {
 
     async buyItem(itemId, countBought, reqTime) {
         try {
+            const start0 = new Date();
             const connection = await this.pool.getConnection();
             await connection.beginTransaction();
+            logger(`buyItem0`, new Date() - start0);
 
             try {
+                const start1 = new Date();
                 await this.updateRoomTime(connection, reqTime);
+                logger(`buyItem1`, new Date() - start1);
+                const start2 = new Date();
                 const [
                     [{ countBuying }],
                 ] = await connection.query(
                     'SELECT COUNT(*) as countBuying FROM buying WHERE room_name = ? AND item_id = ?',
                     [this.roomName, itemId]
                 );
+                logger(`buyItem2`, new Date() - start2);
                 if (parseInt(countBuying, 10) != countBought) {
                     throw new Error(
                         `roomName=${
@@ -128,6 +134,7 @@ class Game {
                     );
                 }
 
+                const start3 = new Date();
                 let totalMilliIsu = bigint('0');
                 const [
                     addings,
@@ -135,25 +142,32 @@ class Game {
                     'SELECT isu FROM adding WHERE room_name = ? AND time <= ?',
                     [this.roomName, reqTime]
                 );
+                logger(`buyItem3`, new Date() - start3);
+                const start4 = new Date();
                 for (let { isu } of addings) {
                     totalMilliIsu = totalMilliIsu.add(
                         bigint(isu).mul(bigint('1000'))
                     );
                 }
-
+                logger(`buyItem4`, new Date() - start4);
+                const start5 = new Date();
                 const [
                     buyings,
                 ] = await connection.query(
                     'SELECT item_id, ordinal, time FROM buying WHERE room_name = ?',
                     [this.roomName]
                 );
+                logger(`buyItem5`, new Date() - start5);
+                const start6 = new Date();
                 for (let b of buyings) {
+                    const start60 = new Date();
                     let [
                         [mItem],
                     ] = await connection.query(
                         'SELECT * FROM m_item WHERE item_id = ?',
                         [b.item_id]
                     );
+                    logger(`buyItem6/0`, new Date() - start60);
                     let item = new MItem(mItem);
                     let cost = item
                         .getPrice(parseInt(b.ordinal, 10))
@@ -166,23 +180,28 @@ class Game {
                         totalMilliIsu = totalMilliIsu.add(gain);
                     }
                 }
-
+                logger(`buyItem6`, new Date() - start6);
+                const start7 = new Date();
                 const [
                     [mItem],
                 ] = await connection.query(
                     'SELECT * FROM m_item WHERE item_id = ?',
                     [itemId]
                 );
+                logger(`buyItem7`, new Date() - start7);
+                const start8 = new Date();
                 const item = new MItem(mItem);
                 const need = item.getPrice(countBought + 1).mul(bigint('1000'));
                 if (totalMilliIsu.cmp(need) < 0) {
                     throw new Error('not enough');
                 }
-
+                logger(`buyItem8`, new Date() - start8);
+                const start9 = new Date();
                 await connection.query(
                     'INSERT INTO buying(room_name, item_id, ordinal, time) VALUES(?, ?, ?, ?)',
                     [this.roomName, itemId, countBought + 1, reqTime]
                 );
+                logger(`buyItem9`, new Date() - start9);
                 await connection.commit();
                 connection.release();
                 return true;
