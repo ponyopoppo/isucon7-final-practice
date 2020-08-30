@@ -1,0 +1,15 @@
+[Unit]
+Description = isucon7final main application in nodejs
+
+[Service]
+WorkingDirectory=/home/ubuntu/cco/webapp/nodejs
+EnvironmentFile=/home/ubuntu/cco/env.sh
+ExecStart = /home/ubuntu/local/node/bin/node /home/ubuntu/cco/webapp/nodejs
+
+Restart   = always
+Type      = simple
+User      = ubuntu
+Group     = ubuntu
+
+[Install]
+WantedBy = multi-user.target
