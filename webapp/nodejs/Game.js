@@ -406,7 +406,7 @@ class Game {
                         .sub(bigint('1'))
                         .div(totalPower)
                         .add(prevTotalMilliIsu);
-                    itemOnSale[itemId] = tt;
+                    itemOnSale[itemId] = tt.toNumber();
                 }
             }
 
