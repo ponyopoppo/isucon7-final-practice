@@ -404,7 +404,8 @@ class Game {
                         .sub(prevTotalMilliIsu)
                         .add(totalPower)
                         .sub(bigint('1'))
-                        .div(totalPower);
+                        .div(totalPower)
+                        .add(prevTotalMilliIsu);
                     itemOnSale[itemId] = tt;
                 }
             }
