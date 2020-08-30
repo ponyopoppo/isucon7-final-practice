@@ -1,15 +1,12 @@
 class Exponential {
-  constructor({ mantissa, exponent }) {
-    this.mantissa = mantissa
-    this.exponent = exponent
-  }
+    constructor({ mantissa, exponent }) {
+        this.mantissa = mantissa;
+        this.exponent = exponent;
+    }
 
-  toJSON () {
-    return [
-      this.mantissa,
-      this.exponent,
-    ]
-  }
+    toJSON() {
+        return [this.mantissa, this.exponent];
+    }
 }
 
-module.exports = Exponential
+module.exports = Exponential;
