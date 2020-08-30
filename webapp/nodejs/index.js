@@ -8,6 +8,7 @@ const serve = require('koa-static');
 const mysql = require('mysql2/promise');
 const Game = require('./Game');
 const logger = require('./logger');
+const { initItems } = require('./memCache');
 
 const app = websockify(new Koa());
 const pool = mysql.createPool({
@@ -24,6 +25,7 @@ const getInitializeHandler = async (ctx) => {
     await pool.query('TRUNCATE TABLE adding');
     await pool.query('TRUNCATE TABLE buying');
     await pool.query('TRUNCATE TABLE room_time');
+    await initItems(pool);
     ctx.status = 204;
 };
 

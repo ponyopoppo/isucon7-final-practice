@@ -4,6 +4,7 @@ const bigint = require('bigint');
 const MItem = require('./MItem');
 const Exponential = require('./Exponential');
 const logger = require('./logger');
+const { getItem } = require('./memCache');
 
 class Game {
     constructor(roomName, pool) {
@@ -161,12 +162,7 @@ class Game {
                 const start6 = new Date();
                 for (let b of buyings) {
                     const start60 = new Date();
-                    let [
-                        [mItem],
-                    ] = await connection.query(
-                        'SELECT * FROM m_item WHERE item_id IN (?)',
-                        [b.item_id]
-                    );
+                    const mItem = getItem(b.item_id);
 
                     logger(`buyItem6/0`, start60);
                     let item = new MItem(mItem);
