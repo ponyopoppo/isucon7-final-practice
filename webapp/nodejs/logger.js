@@ -1,7 +1,10 @@
+//@ts-check
+
 const fs = require('fs');
 
 const LOG_FILE_NAME = 'node.log';
-function logger(path, timeDiff) {
+function logger(path, time0) {
+    const timeDiff = new Date().getTime() - time0.getTime();
     fs.appendFileSync(
         LOG_FILE_NAME,
         JSON.stringify({

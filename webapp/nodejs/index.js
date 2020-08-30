@@ -71,10 +71,7 @@ const wsGameHandler = async (ctx, roomName) => {
             }
 
             await send(ctx.websocket, { request_id, is_success });
-            logger(
-                `${action}/${isu}/${request_id}/${item_id}`,
-                new Date() - start
-            );
+            logger(`${action}/${isu}/${request_id}/${item_id}`, start);
         } catch (e) {
             console.error(e);
             ctx.app.emit('error', e, ctx);

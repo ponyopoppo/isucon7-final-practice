@@ -69,7 +69,7 @@ class Game {
                     [this.roomName, reqTime]
                 );
 
-                logger(`addIsu0`, new Date() - start0);
+                logger(`addIsu0`, start0);
 
                 const start1 = new Date();
                 const [
@@ -78,18 +78,18 @@ class Game {
                     'SELECT isu FROM adding WHERE room_name = ? AND time = ? FOR UPDATE',
                     [this.roomName, reqTime]
                 );
-                logger(`addIsu1`, new Date() - start1);
+                logger(`addIsu1`, start1);
 
                 const start2 = new Date();
                 const newIsu = reqIsu.add(bigint(isu));
-                logger(`addIsu2`, new Date() - start2);
+                logger(`addIsu2`, start2);
 
                 const start3 = new Date();
                 await connection.query(
                     'UPDATE adding SET isu = ? WHERE room_name = ? AND time = ?',
                     [newIsu.toString(), this.roomName, reqTime]
                 );
-                logger(`addIsu3`, new Date() - start3);
+                logger(`addIsu3`, start3);
 
                 await connection.commit();
                 connection.release();
@@ -110,12 +110,12 @@ class Game {
             const start0 = new Date();
             const connection = await this.pool.getConnection();
             await connection.beginTransaction();
-            logger(`buyItem0`, new Date() - start0);
+            logger(`buyItem0`, start0);
 
             try {
                 const start1 = new Date();
                 await this.updateRoomTime(connection, reqTime);
-                logger(`buyItem1`, new Date() - start1);
+                logger(`buyItem1`, start1);
                 const start2 = new Date();
                 const [
                     [{ countBuying }],
@@ -123,7 +123,7 @@ class Game {
                     'SELECT COUNT(*) as countBuying FROM buying WHERE room_name = ? AND item_id = ?',
                     [this.roomName, itemId]
                 );
-                logger(`buyItem2`, new Date() - start2);
+                logger(`buyItem2`, start2);
                 if (parseInt(countBuying, 10) != countBought) {
                     throw new Error(
                         `roomName=${
@@ -142,14 +142,14 @@ class Game {
                     'SELECT isu FROM adding WHERE room_name = ? AND time <= ?',
                     [this.roomName, reqTime]
                 );
-                logger(`buyItem3`, new Date() - start3);
+                logger(`buyItem3`, start3);
                 const start4 = new Date();
                 for (let { isu } of addings) {
                     totalMilliIsu = totalMilliIsu.add(
                         bigint(isu).mul(bigint('1000'))
                     );
                 }
-                logger(`buyItem4`, new Date() - start4);
+                logger(`buyItem4`, start4);
                 const start5 = new Date();
                 const [
                     buyings,
@@ -157,17 +157,18 @@ class Game {
                     'SELECT item_id, ordinal, time FROM buying WHERE room_name = ?',
                     [this.roomName]
                 );
-                logger(`buyItem5`, new Date() - start5);
+                logger(`buyItem5`, start5);
                 const start6 = new Date();
                 for (let b of buyings) {
                     const start60 = new Date();
                     let [
                         [mItem],
                     ] = await connection.query(
-                        'SELECT * FROM m_item WHERE item_id = ?',
+                        'SELECT * FROM m_item WHERE item_id IN (?)',
                         [b.item_id]
                     );
-                    logger(`buyItem6/0`, new Date() - start60);
+
+                    logger(`buyItem6/0`, start60);
                     let item = new MItem(mItem);
                     let cost = item
                         .getPrice(parseInt(b.ordinal, 10))
@@ -180,7 +181,7 @@ class Game {
                         totalMilliIsu = totalMilliIsu.add(gain);
                     }
                 }
-                logger(`buyItem6`, new Date() - start6);
+                logger(`buyItem6`, start6);
                 const start7 = new Date();
                 const [
                     [mItem],
@@ -188,20 +189,20 @@ class Game {
                     'SELECT * FROM m_item WHERE item_id = ?',
                     [itemId]
                 );
-                logger(`buyItem7`, new Date() - start7);
+                logger(`buyItem7`, start7);
                 const start8 = new Date();
                 const item = new MItem(mItem);
                 const need = item.getPrice(countBought + 1).mul(bigint('1000'));
                 if (totalMilliIsu.cmp(need) < 0) {
                     throw new Error('not enough');
                 }
-                logger(`buyItem8`, new Date() - start8);
+                logger(`buyItem8`, start8);
                 const start9 = new Date();
                 await connection.query(
                     'INSERT INTO buying(room_name, item_id, ordinal, time) VALUES(?, ?, ?, ?)',
                     [this.roomName, itemId, countBought + 1, reqTime]
                 );
-                logger(`buyItem9`, new Date() - start9);
+                logger(`buyItem9`, start9);
                 await connection.commit();
                 connection.release();
                 return true;
@@ -228,7 +229,7 @@ class Game {
             'INSERT INTO room_time(room_name, time) VALUES (?, 0) ON DUPLICATE KEY UPDATE time = time',
             [this.roomName]
         );
-        logger(`updateRoomTime0`, new Date() - start0);
+        logger(`updateRoomTime0`, start0);
 
         const start1 = new Date();
         const [
@@ -237,13 +238,13 @@ class Game {
             'SELECT time FROM room_time WHERE room_name = ? FOR UPDATE',
             [this.roomName]
         );
-        logger(`updateRoomTime1`, new Date() - start1);
+        logger(`updateRoomTime1`, start1);
 
         const start2 = new Date();
         const [[{ currentTime }]] = await connection.query(
             'SELECT floor(unix_timestamp(current_timestamp(3))*1000) AS currentTime'
         );
-        logger(`updateRoomTime2`, new Date() - start2);
+        logger(`updateRoomTime2`, start2);
         if (parseInt(time, 10) > parseInt(currentTime, 10)) {
             throw new Error('room time is future');
         }
@@ -258,7 +259,7 @@ class Game {
             'UPDATE room_time SET time = ? WHERE room_name = ?',
             [currentTime, this.roomName]
         );
-        logger(`updateRoomTime3`, new Date() - start3);
+        logger(`updateRoomTime3`, start3);
         return currentTime;
     }
 
