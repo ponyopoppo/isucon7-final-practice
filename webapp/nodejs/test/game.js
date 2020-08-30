@@ -1,5 +1,5 @@
+//@ts-check
 const assert = require('assert');
-const bigint = require('bigint');
 const Game = require('../Game');
 const Exponential = require('../Exponential');
 const MItem = require('../MItem');
@@ -221,12 +221,12 @@ describe('Game', () => {
         assert.equal(2, s.on_sale.length);
         assert.equal(2, s.items.length);
 
-        let totalPower = bigint('0');
-        let milliIsu = bigint(initialIsu).mul(bigint('1000'));
-        milliIsu = milliIsu.sub(x.getPrice(1).mul(bigint('1000')));
-        milliIsu = milliIsu.sub(x.getPrice(2).mul(bigint('1000')));
-        milliIsu = milliIsu.sub(y.getPrice(1).mul(bigint('1000')));
-        milliIsu = milliIsu.sub(y.getPrice(2).mul(bigint('1000')));
+        let totalPower = BigInt('0');
+        let milliIsu = BigInt(initialIsu) * BigInt('1000');
+        milliIsu = milliIsu - x.getPrice(1) * BigInt('1000');
+        milliIsu = milliIsu - x.getPrice(2) * BigInt('1000');
+        milliIsu = milliIsu - y.getPrice(1) * BigInt('1000');
+        milliIsu = milliIsu - y.getPrice(2) * BigInt('1000');
 
         // 0sec
         assert.equal(0, s.schedule[0].time);
@@ -234,21 +234,21 @@ describe('Game', () => {
         assert.deepEqual(game.big2exp(totalPower), s.schedule[0].total_power);
 
         // 0.1sec
-        totalPower = totalPower.add(x.getPower(1));
+        totalPower = totalPower + x.getPower(1);
         assert.equal(100, s.schedule[1].time);
         assert.deepEqual(game.big2exp(milliIsu), s.schedule[1].milli_isu);
         assert.deepEqual(game.big2exp(totalPower), s.schedule[1].total_power);
 
         // 0.2sec
-        milliIsu = milliIsu.add(totalPower.mul(bigint('100')));
-        totalPower = totalPower.add(x.getPower(2));
+        milliIsu = milliIsu + totalPower * BigInt('100');
+        totalPower = totalPower + x.getPower(2);
         assert.equal(200, s.schedule[2].time);
         assert.deepEqual(game.big2exp(milliIsu), s.schedule[2].milli_isu);
         assert.deepEqual(game.big2exp(totalPower), s.schedule[2].total_power);
 
         // 0.3sec
-        milliIsu = milliIsu.add(totalPower.mul(bigint('100')));
-        totalPower = totalPower.add(y.getPower(1));
+        milliIsu = milliIsu + totalPower * BigInt('100');
+        totalPower = totalPower + y.getPower(1);
         assert.equal(300, s.schedule[3].time);
         assert.deepEqual(game.big2exp(milliIsu), s.schedule[3].milli_isu);
         assert.deepEqual(game.big2exp(totalPower), s.schedule[3].total_power);
@@ -270,23 +270,23 @@ describe('Game', () => {
             price3: 3,
             price4: 2,
         });
-        assert.equal(item.getPower(1).cmp(bigint('81')), 0);
-        assert.equal(item.getPrice(1).cmp(bigint('2048')), 0);
+        assert.equal(item.getPower(1) > BigInt('81'), 0);
+        assert.equal(item.getPrice(1) > BigInt('2048'), 0);
     });
 
     it('TestConv', () => {
         const game = new Game('xxx', null);
         assert.deepEqual(
             new Exponential({ mantissa: 0, exponent: 0 }),
-            game.big2exp(bigint('0'))
+            game.big2exp(BigInt('0'))
         );
         assert.deepEqual(
             new Exponential({ mantissa: 1234, exponent: 0 }),
-            game.big2exp(bigint('1234'))
+            game.big2exp(BigInt('1234'))
         );
         assert.deepEqual(
             new Exponential({ mantissa: 111111111111110, exponent: 5 }),
-            game.big2exp(bigint('11111111111111000000'))
+            game.big2exp(BigInt('11111111111111000000'))
         );
     });
 });

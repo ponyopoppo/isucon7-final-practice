@@ -1,5 +1,4 @@
-const bigint = require('bigint');
-
+// @ts-check
 class MItem {
     constructor({
         item_id,
@@ -28,13 +27,13 @@ class MItem {
         const a = this.price1;
         const b = this.price2;
         const c = this.price3;
-        const d = bigint(this.price4);
+        const d = BigInt(this.price4);
         const x = count;
 
-        const s = bigint(c * x + 1);
-        const u = bigint(a * x + b);
-        const t = d.pow(u);
-        return s.mul(t);
+        const s = BigInt(c * x + 1);
+        const u = BigInt(a * x + b);
+        const t = d ** u;
+        return s * t;
     }
 
     getPower(count) {
@@ -42,13 +41,13 @@ class MItem {
         const a = this.power1;
         const b = this.power2;
         const c = this.power3;
-        const d = bigint(this.power4);
+        const d = BigInt(this.power4);
         const x = count;
 
-        const s = bigint(c * x + 1);
-        const u = bigint(a * x + b);
-        const t = d.pow(u);
-        return s.mul(t);
+        const s = BigInt(c * x + 1);
+        const u = BigInt(a * x + b);
+        const t = d ** u;
+        return s * t;
     }
 
     toJSON() {

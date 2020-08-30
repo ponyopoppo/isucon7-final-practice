@@ -1,6 +1,7 @@
+//@ts-check
+
 const path = require('path');
 const http = require('http');
-const bigint = require('bigint');
 const Koa = require('koa');
 const router = require('koa-route');
 const websockify = require('koa-websocket');
@@ -22,8 +23,11 @@ const pool = mysql.createPool({
 });
 
 const getInitializeHandler = async (ctx) => {
+    // @ts-ignore
     await pool.query('TRUNCATE TABLE adding');
+    // @ts-ignore
     await pool.query('TRUNCATE TABLE buying');
+    // @ts-ignore
     await pool.query('TRUNCATE TABLE room_time');
     await initItems(pool);
     ctx.status = 204;
@@ -54,7 +58,7 @@ const wsGameHandler = async (ctx, roomName) => {
             let is_success = false;
             switch (action) {
                 case 'addIsu':
-                    is_success = await game.addIsu(bigint(isu), time);
+                    is_success = await game.addIsu(BigInt(isu), time);
                     break;
                 case 'buyItem':
                     is_success = await game.buyItem(
