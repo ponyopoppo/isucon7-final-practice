@@ -1,3 +1,5 @@
+//@ts-check
+
 const bigint = require('bigint');
 const MItem = require('./MItem');
 const Exponential = require('./Exponential');
@@ -66,7 +68,8 @@ class Game {
                     "INSERT INTO adding(room_name, time, isu) VALUES (?, ?, '0') ON DUPLICATE KEY UPDATE isu=isu",
                     [this.roomName, reqTime]
                 );
-                logger(`${action}0`, new Date() - start0);
+
+                logger(`addIsu0`, new Date() - start0);
 
                 const start1 = new Date();
                 const [
@@ -75,18 +78,18 @@ class Game {
                     'SELECT isu FROM adding WHERE room_name = ? AND time = ? FOR UPDATE',
                     [this.roomName, reqTime]
                 );
-                logger(`${action}1`, new Date() - start1);
+                logger(`addIsu1`, new Date() - start1);
 
                 const start2 = new Date();
                 const newIsu = reqIsu.add(bigint(isu));
-                logger(`${action}2`, new Date() - start2);
+                logger(`addIsu2`, new Date() - start2);
 
                 const start3 = new Date();
                 await connection.query(
                     'UPDATE adding SET isu = ? WHERE room_name = ? AND time = ?',
                     [newIsu.toString(), this.roomName, reqTime]
                 );
-                logger(`${action}3`, new Date() - start3);
+                logger(`addIsu3`, new Date() - start3);
 
                 await connection.commit();
                 connection.release();
