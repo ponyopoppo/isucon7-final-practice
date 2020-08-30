@@ -359,10 +359,9 @@ class Game {
         for (let i = 0; i < times.length; i++) {
             const t = times[i];
             const prevTotalMilliIsu = totalMilliIsu;
+            const prevT = i > 0 ? times[i - 1] : currentTime;
             totalMilliIsu = totalMilliIsu.add(
-                totalPower.mul(
-                    bigint(`${times[i] - (i > 0 ? times[i - 1] : currentTime)}`)
-                )
+                totalPower.mul(bigint(`${times[i] - prevT}`))
             );
             let updated = false;
 
@@ -397,13 +396,15 @@ class Game {
                         }
                     }
                     if (typeof itemOnSale[itemId] !== 'undefined') continue;
-                    const tt = itemPMilli
-                        .sub(prevTotalMilliIsu)
-                        .add(totalPower)
-                        .sub(bigint('1'))
-                        .div(totalPower)
-                        .add(prevTotalMilliIsu);
-                    itemOnSale[itemId] = tt.toNumber();
+                    const tt =
+                        itemPMilli
+                            .sub(prevTotalMilliIsu)
+                            .add(totalPower)
+                            .sub(bigint('1'))
+                            .div(totalPower)
+                            .toNumber() + prevT;
+
+                    itemOnSale[itemId] = tt;
                 }
             }
 
