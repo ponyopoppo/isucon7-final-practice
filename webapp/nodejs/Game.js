@@ -238,15 +238,13 @@ class Game {
         logger(`updateRoomTime1`, start1);
 
         const start2 = new Date();
-        const [[{ currentTime }]] = await connection.query(
-            'SELECT floor(unix_timestamp(current_timestamp(3))*1000) AS currentTime'
-        );
+        const currentTime = new Date().getTime();
         logger(`updateRoomTime2`, start2);
-        if (parseInt(time, 10) > parseInt(currentTime, 10)) {
+        if (parseInt(time, 10) > currentTime) {
             throw new Error('room time is future');
         }
         if (reqTime !== 0) {
-            if (reqTime < parseInt(currentTime, 10)) {
+            if (reqTime < currentTime) {
                 throw new Error('reqTime is past');
             }
         }
@@ -456,10 +454,8 @@ class Game {
 
     async getCurrentTime() {
         try {
-            const [[{ currentTime }]] = await this.pool.query(
-                'SELECT floor(unix_timestamp(current_timestamp(3))*1000) AS currentTime'
-            );
-            return parseInt(currentTime, 10);
+            const currentTime = new Date().getTime();
+            return currentTime;
         } catch (e) {
             console.error(e);
             return 0;
