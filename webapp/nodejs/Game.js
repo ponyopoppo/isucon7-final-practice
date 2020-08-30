@@ -134,9 +134,9 @@ class Game {
                 if (parseInt(countBuying, 10) != countBought) {
                     throw new Error(
                         `roomName=${
-                            this.roomName
+                        this.roomName
                         }, itemId=${itemId} countBought+1=${
-                            countBought + 1
+                        countBought + 1
                         } is already bought`
                     );
                 }
@@ -275,6 +275,7 @@ class Game {
         const addingAt = {}; // Time => currentTime より先の Adding
         const buyingAt = {}; // Time => currentTime より先の Buying
 
+        const b1000 = bigint('1000');
         const start0 = new Date();
         for (let itemId in mItems) {
             itemPower[itemId] = bigint('0');
@@ -287,7 +288,7 @@ class Game {
             // adding は adding.time に isu を増加させる
             if (a.time <= currentTime) {
                 totalMilliIsu = totalMilliIsu.add(
-                    bigint(a.isu).mul(bigint('1000'))
+                    bigint(a.isu).mul(b1000)
                 );
             } else {
                 addingAt[a.time] = a;
@@ -302,7 +303,7 @@ class Game {
                 : 1;
             const m = mItems[b.item_id];
             totalMilliIsu = totalMilliIsu.sub(
-                m.getPrice(b.ordinal).mul(bigint('1000'))
+                m.getPrice(b.ordinal).mul(bigint(b1000))
             );
 
             if (b.time <= currentTime) {
@@ -322,13 +323,17 @@ class Game {
         }
         logger(`calcStatus2`, start2);
         const start3 = new Date();
+
         for (let itemId in mItems) {
             const m = mItems[itemId];
             itemPower0[m.itemId] = this.big2exp(itemPower[m.itemId]);
             itemBuilt0[m.itemId] = itemBuilt[m.itemId];
             const price = m.getPrice((itemBought[m.itemId] || 0) + 1);
-            itemPrice[m.itemId] = price;
-            if (0 <= totalMilliIsu.cmp(price.mul(bigint('1000')))) {
+            itemPrice[m.itemId] = {
+                a: price,
+                b: price.mul(b1000)
+            };
+            if (0 <= totalMilliIsu.cmp(itemPrice[m.itemId].b)) {
                 itemOnSale[m.itemId] = 0; // 0 は 時刻 currentTime で購入可能であることを表す
             }
         }
@@ -371,7 +376,7 @@ class Game {
                 let a = addingAt[t];
                 updated = true;
                 totalMilliIsu = totalMilliIsu.add(
-                    bigint(a.isu).mul(bigint('1000'))
+                    bigint(a.isu).mul(b1000)
                 );
             }
 
@@ -380,7 +385,7 @@ class Game {
                 if (typeof itemOnSale[itemId] !== 'undefined') {
                     continue;
                 }
-                const itemPMilli = itemPrice[itemId].mul(bigint('1000'));
+                const itemPMilli = itemPrice[itemId].b;
                 function isOk(milli) {
                     return 0 <= milli.cmp(itemPMilli);
                 }
@@ -389,7 +394,7 @@ class Game {
                         if (
                             !isOk(
                                 totalMilliIsu.sub(
-                                    bigint(addingAt[t].isu).mul(bigint('1000'))
+                                    bigint(addingAt[t].isu).mul(b1000)
                                 )
                             )
                         ) {
@@ -451,7 +456,7 @@ class Game {
                 item_id: parseInt(itemId, 10),
                 count_bought: itemBought[itemId] || 0,
                 count_built: itemBuilt0[itemId] || 0,
-                next_price: this.big2exp(itemPrice[itemId]),
+                next_price: this.big2exp(itemPrice[itemId].a),
                 power: itemPower0[itemId],
                 building: itemBuilding[itemId],
             });
