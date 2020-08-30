@@ -1,5 +1,6 @@
 //@ts-check
 
+const bigint = require('bigint');
 const MItem = require('./MItem');
 const Exponential = require('./Exponential');
 const logger = require('./logger');
@@ -87,7 +88,7 @@ class Game {
                 logger(`addIsu1`, start1);
 
                 const start2 = new Date();
-                const newIsu = reqIsu + BigInt(isu);
+                const newIsu = reqIsu.add(bigint(isu));
                 logger(`addIsu2`, start2);
 
                 const start3 = new Date();
@@ -141,7 +142,7 @@ class Game {
                 }
 
                 const start3 = new Date();
-                let totalMilliIsu = BigInt('0');
+                let totalMilliIsu = bigint('0');
                 const [
                     addings,
                 ] = await connection.query(
@@ -151,8 +152,9 @@ class Game {
                 logger(`buyItem3`, start3);
                 const start4 = new Date();
                 for (let { isu } of addings) {
-                    totalMilliIsu =
-                        totalMilliIsu + BigInt(isu) * BigInt('1000');
+                    totalMilliIsu = totalMilliIsu.add(
+                        bigint(isu).mul(bigint('1000'))
+                    );
                 }
                 logger(`buyItem4`, start4);
                 const start5 = new Date();
@@ -170,14 +172,15 @@ class Game {
 
                     logger(`buyItem6/0`, start60);
                     let item = new MItem(mItem);
-                    let cost =
-                        item.getPrice(parseInt(b.ordinal, 10)) * BigInt('1000');
-                    totalMilliIsu = totalMilliIsu - cost;
+                    let cost = item
+                        .getPrice(parseInt(b.ordinal, 10))
+                        .mul(bigint('1000'));
+                    totalMilliIsu = totalMilliIsu.sub(cost);
                     if (parseInt(b.time, 10) <= reqTime) {
-                        let gain =
-                            item.getPower(parseInt(b.ordinal, 10)) *
-                            BigInt('' + (reqTime - parseInt(b.time, 10)));
-                        totalMilliIsu = totalMilliIsu + gain;
+                        let gain = item
+                            .getPower(parseInt(b.ordinal, 10))
+                            .mul(bigint('' + (reqTime - parseInt(b.time, 10))));
+                        totalMilliIsu = totalMilliIsu.add(gain);
                     }
                 }
                 logger(`buyItem6`, start6);
@@ -186,8 +189,8 @@ class Game {
                 logger(`buyItem7`, start7);
                 const start8 = new Date();
                 const item = new MItem(mItem);
-                const need = item.getPrice(countBought + 1) * BigInt('1000');
-                if (totalMilliIsu < need) {
+                const need = item.getPrice(countBought + 1).mul(bigint('1000'));
+                if (totalMilliIsu.cmp(need) < 0) {
                     throw new Error('not enough');
                 }
                 logger(`buyItem8`, start8);
@@ -259,8 +262,8 @@ class Game {
 
     calcStatus(currentTime, mItems, addings, buyings) {
         // 1ミリ秒に生産できる椅子の単位をミリ椅子とする
-        let totalMilliIsu = BigInt('0');
-        let totalPower = BigInt('0');
+        let totalMilliIsu = bigint('0');
+        let totalPower = bigint('0');
 
         const itemPower = {}; // ItemID => Power
         const itemPrice = {}; // ItemID => Price
@@ -276,7 +279,7 @@ class Game {
 
         const start0 = new Date();
         for (let itemId in mItems) {
-            itemPower[itemId] = BigInt('0');
+            itemPower[itemId] = bigint('0');
             itemBuilding[itemId] = [];
         }
         logger(`calcStatus0`, start0);
@@ -285,7 +288,9 @@ class Game {
         for (let a of addings) {
             // adding は adding.time に isu を増加させる
             if (a.time <= currentTime) {
-                totalMilliIsu = totalMilliIsu + BigInt(a.isu) * BigInt('1000');
+                totalMilliIsu = totalMilliIsu.add(
+                    bigint(a.isu).mul(bigint('1000'))
+                );
             } else {
                 addingAt[a.time] = a;
             }
@@ -298,18 +303,20 @@ class Game {
                 ? itemBought[b.item_id] + 1
                 : 1;
             const m = mItems[b.item_id];
-            totalMilliIsu =
-                totalMilliIsu - m.getPrice(b.ordinal) * BigInt('1000');
+            totalMilliIsu = totalMilliIsu.sub(
+                m.getPrice(b.ordinal).mul(bigint('1000'))
+            );
 
             if (b.time <= currentTime) {
                 itemBuilt[b.item_id] = itemBuilt[b.item_id]
                     ? itemBuilt[b.item_id] + 1
                     : 1;
                 const power = m.getPower(itemBought[b.item_id]);
-                totalMilliIsu =
-                    totalMilliIsu + power * BigInt(currentTime - b.time);
-                totalPower = totalPower + power;
-                itemPower[b.item_id] = itemPower[b.item_id] + power;
+                totalMilliIsu = totalMilliIsu.add(
+                    power.mul(bigint(currentTime - b.time))
+                );
+                totalPower = totalPower.add(power);
+                itemPower[b.item_id] = itemPower[b.item_id].add(power);
             } else {
                 buyingAt[b.time] = buyingAt[b.time] || [];
                 buyingAt[b.time].push(b);
@@ -323,7 +330,7 @@ class Game {
             itemBuilt0[m.itemId] = itemBuilt[m.itemId];
             const price = m.getPrice((itemBought[m.itemId] || 0) + 1);
             itemPrice[m.itemId] = price;
-            if (totalMilliIsu >= price * BigInt('1000')) {
+            if (0 <= totalMilliIsu.cmp(price.mul(bigint('1000')))) {
                 itemOnSale[m.itemId] = 0; // 0 は 時刻 currentTime で購入可能であることを表す
             }
         }
@@ -338,14 +345,16 @@ class Game {
         const start4 = new Date();
         // currentTime から 1000 ミリ秒先までシミュレーションする
         for (let t = currentTime + 1; t <= currentTime + 1000; t++) {
-            totalMilliIsu = totalMilliIsu + totalPower;
+            totalMilliIsu = totalMilliIsu.add(totalPower);
             let updated = false;
 
             // 時刻 t で発生する adding を計算する
             if (addingAt[t]) {
                 let a = addingAt[t];
                 updated = true;
-                totalMilliIsu = totalMilliIsu + BigInt(a.isu) * BigInt('1000');
+                totalMilliIsu = totalMilliIsu.add(
+                    bigint(a.isu).mul(bigint('1000'))
+                );
             }
 
             // 時刻 t で発生する buying を計算する
@@ -359,8 +368,8 @@ class Game {
                         ? itemBuilt[b.item_id] + 1
                         : 1;
                     const power = m.getPower(b.ordinal);
-                    itemPower[b.item_id] = itemPower[b.item_id] + power;
-                    totalPower = totalPower + power;
+                    itemPower[b.item_id] = itemPower[b.item_id].add(power);
+                    totalPower = totalPower.add(power);
                 }
                 for (let id in updatedID) {
                     itemBuilding[id].push({
@@ -384,7 +393,10 @@ class Game {
                 if (typeof itemOnSale[itemId] !== 'undefined') {
                     continue;
                 }
-                if (totalMilliIsu >= itemPrice[itemId] * BigInt('1000')) {
+                if (
+                    0 <=
+                    totalMilliIsu.cmp(itemPrice[itemId].mul(bigint('1000')))
+                ) {
                     itemOnSale[itemId] = t;
                 }
             }
@@ -437,14 +449,11 @@ class Game {
         }
     }
 
-    /**
-     * @param {bigint} n
-     */
     big2exp(n) {
         const s = n.toString();
         if (s.length <= 15) {
             return new Exponential({
-                mantissa: BigInt.asIntN(64, n),
+                mantissa: n.toNumber(),
                 exponent: 0,
             });
         }
