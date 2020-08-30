@@ -19,6 +19,10 @@ function getItem(itemId) {
     // };
 }
 
+function getItems() {
+    return mItems;
+}
+
 /**
  * @param {{ getConnection: () => any; }} pool
  */
@@ -31,4 +35,5 @@ async function initItems(pool) {
 module.exports = {
     getItem,
     initItems,
+    getItems,
 };

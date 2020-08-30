@@ -3,6 +3,10 @@
 const fs = require('fs');
 
 const LOG_FILE_NAME = 'node.log';
+/**
+ * @param {string} path
+ * @param {Date} time0
+ */
 function logger(path, time0) {
     const timeDiff = new Date().getTime() - time0.getTime();
     fs.appendFileSync(

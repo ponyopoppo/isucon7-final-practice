@@ -4,7 +4,7 @@ const bigint = require('bigint');
 const MItem = require('./MItem');
 const Exponential = require('./Exponential');
 const logger = require('./logger');
-const { getItem } = require('./memCache');
+const { getItem, getItems } = require('./memCache');
 
 class Game {
     constructor(roomName, pool) {
@@ -17,12 +17,16 @@ class Game {
         await connection.beginTransaction();
 
         try {
+            const start0 = new Date();
             const currentTime = await this.updateRoomTime(connection, 0);
             const mItems = {};
-            const [items] = await connection.query('SELECT * FROM m_item');
+            const items = getItems();
+
             for (let item of items) {
                 mItems[item.item_id] = new MItem(item);
             }
+            logger(`getStatus0`, start0);
+            const start1 = new Date();
             const [
                 addings,
             ] = await connection.query(
@@ -37,18 +41,20 @@ class Game {
             );
             await connection.commit();
             connection.release();
-
+            logger(`getStatus1`, start1);
+            const start2 = new Date();
             const status = this.calcStatus(
                 currentTime,
                 mItems,
                 addings,
                 buyings
             );
-
+            logger(`getStatus2`, start2);
+            const start3 = new Date();
             // calcStatusに時間がかかる可能性があるので タイムスタンプを取得し直す
             const latestTime = await this.getCurrentTime();
             status.time = latestTime;
-
+            logger(`getStatus3`, start3);
             return status;
         } catch (e) {
             await connection.rollback();
@@ -179,12 +185,7 @@ class Game {
                 }
                 logger(`buyItem6`, start6);
                 const start7 = new Date();
-                const [
-                    [mItem],
-                ] = await connection.query(
-                    'SELECT * FROM m_item WHERE item_id = ?',
-                    [itemId]
-                );
+                const mItem = getItem(itemId);
                 logger(`buyItem7`, start7);
                 const start8 = new Date();
                 const item = new MItem(mItem);
