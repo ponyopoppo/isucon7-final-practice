@@ -348,10 +348,28 @@ class Game {
             },
         ];
         const start4 = new Date();
-        const t2totalMilliIsu = [];
+        const filterKeys = (obj) => {
+            return Object.keys(obj)
+                .map((t) => parseInt(t))
+                .filter((t) => t >= currentTime + 1 && t <= currentTime + 1000);
+        };
+        const times = Array.from(
+            new Set([
+                currentTime + 1,
+                currentTime + 1000,
+                ...filterKeys(addingAt),
+                ...filterKeys(buyingAt),
+            ])
+        ).sort((a, b) => a - b);
+
         // currentTime から 1000 ミリ秒先までシミュレーションする
-        for (let t = currentTime + 1; t <= currentTime + 1000; t++) {
-            totalMilliIsu = totalMilliIsu.add(totalPower);
+        for (let i = 0; i < times.length; i++) {
+            const t = times[i];
+            totalMilliIsu = totalMilliIsu.add(
+                totalPower.mul(
+                    bigint(`${times[i] - (i > 0 ? times[i - 1] : currentTime)}`)
+                )
+            );
             let updated = false;
 
             // 時刻 t で発生する adding を計算する
@@ -362,7 +380,20 @@ class Game {
                     bigint(a.isu).mul(bigint('1000'))
                 );
             }
-            t2totalMilliIsu.push(totalMilliIsu);
+
+            // 時刻 t で購入可能になったアイテムを記録する
+            for (let itemId in mItems) {
+                if (typeof itemOnSale[itemId] !== 'undefined') {
+                    continue;
+                }
+                if (
+                    0 <=
+                    totalMilliIsu.cmp(itemPrice[itemId].mul(bigint('1000')))
+                ) {
+                    itemOnSale[itemId] = t;
+                }
+            }
+
             // 時刻 t で発生する buying を計算する
             if (buyingAt[t]) {
                 updated = true;
@@ -395,34 +426,6 @@ class Game {
             }
         }
 
-        for (let itemId in mItems) {
-            if (typeof itemOnSale[itemId] !== 'undefined') {
-                continue;
-            }
-            let lower = -1;
-            let upper = 999;
-            while (upper - lower > 1) {
-                let mid = Math.ceil((upper + lower) / 2);
-                if (
-                    0 <=
-                    t2totalMilliIsu[mid].cmp(
-                        itemPrice[itemId].mul(bigint('1000'))
-                    )
-                ) {
-                    upper = mid;
-                } else {
-                    lower = mid;
-                }
-            }
-            if (
-                0 <=
-                t2totalMilliIsu[upper].cmp(
-                    itemPrice[itemId].mul(bigint('1000'))
-                )
-            ) {
-                itemOnSale[itemId] = upper + currentTime + 1;
-            }
-        }
         logger(`calcStatus4`, start4);
         const gsAdding = [];
         for (let a of Object.values(addingAt)) {
