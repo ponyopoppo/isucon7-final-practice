@@ -343,6 +343,7 @@ class Game {
             },
         ];
         const start4 = new Date();
+        const t2totalMilliIsu = [];
         // currentTime から 1000 ミリ秒先までシミュレーションする
         for (let t = currentTime + 1; t <= currentTime + 1000; t++) {
             totalMilliIsu = totalMilliIsu.add(totalPower);
@@ -356,7 +357,7 @@ class Game {
                     bigint(a.isu).mul(bigint('1000'))
                 );
             }
-
+            t2totalMilliIsu.push(totalMilliIsu);
             // 時刻 t で発生する buying を計算する
             if (buyingAt[t]) {
                 updated = true;
@@ -387,18 +388,34 @@ class Game {
                     total_power: this.big2exp(totalPower),
                 });
             }
+        }
 
-            // 時刻 t で購入可能になったアイテムを記録する
-            for (let itemId in mItems) {
-                if (typeof itemOnSale[itemId] !== 'undefined') {
-                    continue;
-                }
+        for (let itemId in mItems) {
+            if (typeof itemOnSale[itemId] !== 'undefined') {
+                continue;
+            }
+            let lower = -1;
+            let upper = 999;
+            while (upper - lower > 1) {
+                let mid = Math.ceil((upper + lower) / 2);
                 if (
                     0 <=
-                    totalMilliIsu.cmp(itemPrice[itemId].mul(bigint('1000')))
+                    t2totalMilliIsu[mid].cmp(
+                        itemPrice[itemId].mul(bigint('1000'))
+                    )
                 ) {
-                    itemOnSale[itemId] = t;
+                    upper = mid;
+                } else {
+                    lower = mid;
                 }
+            }
+            if (
+                0 <=
+                t2totalMilliIsu[upper].cmp(
+                    itemPrice[itemId].mul(bigint('1000'))
+                )
+            ) {
+                itemOnSale[itemId] = upper + currentTime + 1;
             }
         }
         logger(`calcStatus4`, start4);
