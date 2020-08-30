@@ -62,7 +62,7 @@ class MItem {
     const s = c * x + 1;
     const u = a * x + b;
     const t = Math.pow(d, u);
-    return s.mul(t);
+    return s * t;
   }
 
   toJSON() {
