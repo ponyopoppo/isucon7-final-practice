@@ -204,19 +204,27 @@ class Game {
     // 状態になることに注意 (keyword: MVCC, repeatable read).
     async updateRoomTime(connection, reqTime) {
         // See page 13 and 17 in https://www.slideshare.net/ichirin2501/insert-51938787
+        const start0 = new Date();
         await connection.query(
             'INSERT INTO room_time(room_name, time) VALUES (?, 0) ON DUPLICATE KEY UPDATE time = time',
             [this.roomName]
         );
+        logger(`updateRoomTime0`, new Date() - start0);
+
+        const start1 = new Date();
         const [
             [{ time }],
         ] = await connection.query(
             'SELECT time FROM room_time WHERE room_name = ? FOR UPDATE',
             [this.roomName]
         );
+        logger(`updateRoomTime1`, new Date() - start1);
+
+        const start2 = new Date();
         const [[{ currentTime }]] = await connection.query(
             'SELECT floor(unix_timestamp(current_timestamp(3))*1000) AS currentTime'
         );
+        logger(`updateRoomTime2`, new Date() - start2);
         if (parseInt(time, 10) > parseInt(currentTime, 10)) {
             throw new Error('room time is future');
         }
@@ -226,10 +234,12 @@ class Game {
             }
         }
 
+        const start3 = new Date();
         await connection.query(
             'UPDATE room_time SET time = ? WHERE room_name = ?',
             [currentTime, this.roomName]
         );
+        logger(`updateRoomTime3`, new Date() - start3);
         return currentTime;
     }
 
