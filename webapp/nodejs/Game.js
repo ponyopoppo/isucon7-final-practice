@@ -260,6 +260,7 @@ class Game {
 
     calcStatus(currentTime, mItems, addings, buyings) {
         // 1ミリ秒に生産できる椅子の単位をミリ椅子とする
+        let totalMilliIsu = bigint('0');
         let totalPower = bigint('0');
 
         const itemPower = {}; // ItemID => Power
@@ -282,12 +283,9 @@ class Game {
         logger(`calcStatus0`, start0);
 
         const start1 = new Date();
-        let totalMilliIsu = this.lastTotalMilliIsu || bigint('0');
-        for (let i = (this.lastAddingPos || -1) + 1; i < addings.length; i++) {
-            const a = addings[i];
+        for (let a of addings) {
             // adding は adding.time に isu を増加させる
             if (a.time <= currentTime) {
-                this.lastAddingPos = i;
                 totalMilliIsu = totalMilliIsu.add(
                     bigint(a.isu).mul(bigint('1000'))
                 );
@@ -295,7 +293,6 @@ class Game {
                 addingAt[a.time] = a;
             }
         }
-        this.lastTotalMilliIsu = totalMilliIsu;
         logger(`calcStatus1`, start1);
         const start2 = new Date();
         for (let b of buyings) {
